@@ -1,7 +1,7 @@
 package com.jean.auth_api.controller;
 
 import com.jean.auth_api.model.User;
-import com.jean.auth_api.repository.UserRepository;
+import com.jean.auth_api.service.UserService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -14,29 +14,33 @@ import java.util.Optional;
 public class UserController {
 
     @Autowired
-    private UserRepository userRepository;
+    private UserService userService;
 
-    //Criar usuario
+    //Criar usuário
     @PostMapping
     public User createUser(@RequestBody User user) {
-        return userRepository.save(user);
+
+        return userService.createUser(user);
     }
 
-    //Listar todos os usuarios
+    //Listar usuários
     @GetMapping
-    public List<User> getALLUsers() {
-        return userRepository.findAll();
+    public List<User> getAllUsers() {
+
+        return userService.getAllUsers();
     }
 
-    //Buscar usuario por id
+    //Buscar usuário por ID
     @GetMapping("/{id}")
     public Optional<User> getUserById(@PathVariable Long id) {
-        return userRepository.findById(id);
+
+        return userService.getUserById(id);
     }
 
-    //deletar usuario 
+    //Deletar usuário
     @DeleteMapping("/{id}")
     public void deleteUser(@PathVariable Long id) {
-        userRepository.deleteById(id);
+
+        userService.deleteUser(id);
     }
 }

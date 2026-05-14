@@ -3,47 +3,47 @@ package com.jean.auth_api.service;
 import com.jean.auth_api.model.User;
 import com.jean.auth_api.repository.UserRepository;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
-/*
- * Service é onde ficam as regras de negócio da aplicação.
- * Aqui NÃO deve ter lógica de banco direto nem lógica de controller.
- */
+import java.util.List;
+import java.util.Optional;
+
 @Service
 public class UserService {
 
-    // Injeta o repository para acessar o banco de dados
-    private final UserRepository userRepository;
+    @Autowired
+    private UserRepository userRepository;
 
-    /*
-     * Construtor com injeção de dependência
-     */
-    public UserService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-    /*
-     * Método para criar um novo usuário
-     */
+    //Criar usuário
     public User createUser(User user) {
+
+        // Criptografa a senha antes de salvar
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
         return userRepository.save(user);
     }
 
-    /*
-     * Retorna todos os usuários do banco
-     */
-    public List<User> listUsers() {
+    //Listar usuários
+    public List<User> getAllUsers() {
+
         return userRepository.findAll();
     }
 
-    /*
-     * Busca usuário pelo email
-     * Se não encontrar, lança erro
-     */
-    public User findByEmail(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    //Buscar usuário por ID
+    public Optional<User> getUserById(Long id) {
+
+        return userRepository.findById(id);
+    }
+
+    //Deletar usuário
+    public void deleteUser(Long id) {
+
+        userRepository.deleteById(id);
     }
 }
