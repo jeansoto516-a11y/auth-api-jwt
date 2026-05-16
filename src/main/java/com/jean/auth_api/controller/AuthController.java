@@ -1,48 +1,39 @@
 package com.jean.auth_api.controller;
 
-import com.jean.auth_api.dto.RegisterRequestDTO;
+import com.jean.auth_api.dto.AuthRequest;
+import com.jean.auth_api.dto.AuthResponse;
 import com.jean.auth_api.model.User;
-import com.jean.auth_api.service.UserService;
+import com.jean.auth_api.repository.UserRepository;
+import com.jean.auth_api.security.JwtService;
 
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-//Controller responsável pelas rotas de autenticação.
-//Aqui ficam os endpoints da API.
 @RestController
-
-
-//Define o prefixo das rotas:
 @RequestMapping("/auth")
 public class AuthController {
 
-    // Injeta o UserService
-    private final UserService userService;
+    @Autowired
+    private UserRepository userRepository;
 
-    // Construtor com injeção de dependência
-    public AuthController(UserService userService) {
-        this.userService = userService;
-    }
+    @Autowired
+    private JwtService jwtService;
 
-    //Endpoint de cadastro de usuário
-    //POST /auth/register
+    @PostMapping("/login")
+    public AuthResponse login(@RequestBody AuthRequest request) {
 
-    @PostMapping("/register")
-    public ResponseEntity<String> register(
-            @RequestBody RegisterRequestDTO data) {
+        User user = userRepository.findByEmail(request.getEmail());
 
-        // Cria novo usuário
-        User user = new User();
+        if (user == null) {
+            throw new RuntimeException("Usuário não encontrado");
+        }
 
-        // Preenche os dados
-        user.setName(data.getName());
-        user.setEmail(data.getEmail());
-        user.setPassword(data.getPassword());
+        if (!user.getPassword().equals(request.getPassword())) {
+            throw new RuntimeException("Senha inválida");
+        }
 
-        // Salva usuário no banco
-        userService.createUser(user);
+        String token = jwtService.generateToken(user.getEmail());
 
-        // Retorna resposta de sucesso
-        return ResponseEntity.ok("Usuário cadastrado com sucesso!");
+        return new AuthResponse(token);
     }
 }
