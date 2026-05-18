@@ -4,64 +4,93 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
+import io.jsonwebtoken.security.Keys;
+
 import org.springframework.stereotype.Service;
 
-import javax.crypto.spec.SecretKeySpec;
-import java.security.Key;
+import javax.crypto.SecretKey;
+
 import java.util.Date;
 import java.util.function.Function;
 
 @Service
 public class JwtService {
 
-    // Chave secreta
-    private static final String SECRET_KEY = "minha_chave_super_secreta_jwt_123456";
+    private static final String SECRET_KEY =
+            "minha_chave_super_secreta_jwt_123456_123456789";
 
-    // Gerar chave
-    private Key getSignKey() {
+    /*
+     * Gera chave segura para assinatura do JWT
+     */
+    private SecretKey getSignKey() {
 
-        return new SecretKeySpec(
-                SECRET_KEY.getBytes(),
-                SignatureAlgorithm.HS256.getJcaName()
+        return Keys.hmacShaKeyFor(
+                SECRET_KEY.getBytes()
         );
     }
 
-    // Gerar token
+    /*
+     * Gera token JWT
+     */
     public String generateToken(String email) {
 
         return Jwts.builder()
+
+                // usuário dono do token
                 .subject(email)
-                .issuedAt(new Date(System.currentTimeMillis()))
+
+                // data de criação
+                .issuedAt(new Date())
+
+                // expira em 1 hora
                 .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
-                .signWith(getSignKey())
+
+                // assinatura
+                .signWith(getSignKey(), SignatureAlgorithm.HS256)
+
                 .compact();
     }
 
-    // Extrair email do token
+    /*
+     * Extrai email do token
+     */
     public String extractUsername(String token) {
 
         return extractClaim(token, Claims::getSubject);
     }
 
-    // Extrair claims
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+    /*
+     * Extrai qualquer informação do token
+     */
+    public <T> T extractClaim(
+            String token,
+            Function<Claims, T> claimsResolver
+    ) {
 
         final Claims claims = extractAllClaims(token);
 
         return claimsResolver.apply(claims);
     }
 
-    // Extrair tudo do token
+    /*
+     * Extrai todos os dados do token
+     */
     private Claims extractAllClaims(String token) {
 
         return Jwts.parser()
-                .verifyWith((javax.crypto.SecretKey) getSignKey())
+
+                .verifyWith(getSignKey())
+
                 .build()
+
                 .parseSignedClaims(token)
+
                 .getPayload();
     }
 
-    // Validar token
+    /*
+     * Valida token
+     */
     public boolean isTokenValid(String token, String email) {
 
         final String username = extractUsername(token);
