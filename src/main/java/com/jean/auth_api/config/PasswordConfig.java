@@ -9,6 +9,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 public class PasswordConfig {
 
+    /*
+     * Bean responsável por criptografar senhas
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
 

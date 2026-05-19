@@ -14,47 +14,72 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/auth")
 public class AuthController {
 
-    // Repository responsável por acessar a tabela de usuários
+    /*
+     * Repository responsável pelas operações no banco
+     */
     @Autowired
     private UserRepository userRepository;
 
-    // Serviço responsável por gerar o token JWT
+    /*
+     * Serviço responsável por gerar e validar JWT
+     */
     @Autowired
     private JwtService jwtService;
 
-    // Encoder usado para criptografar e validar senhas
+    /*
+     * Responsável por criptografar e validar senhas
+     */
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    // Endpoint para registrar um novo usuário
+    /*
+     * Endpoint de cadastro de usuário
+     */
     @PostMapping("/register")
     public User register(@RequestBody User user) {
 
         // Criptografa a senha antes de salvar
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setPassword(
+                passwordEncoder.encode(user.getPassword())
+        );
 
         // Salva usuário no banco
         return userRepository.save(user);
     }
 
+    /*
+     * Endpoint de login
+     */
     @PostMapping("/login")
     public AuthResponse login(@RequestBody AuthRequest request) {
 
         // Busca usuário pelo email
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-       
+        User user = userRepository.findByEmail(
+                request.getEmail()
+        );
+
+        // Verifica se usuário existe
+        if (user == null) {
+            throw new RuntimeException("Usuário não encontrado");
+        }
+
+        // Valida senha enviada com senha criptografada do banco
         boolean senhaCorreta = passwordEncoder.matches(
                 request.getPassword(),
                 user.getPassword()
         );
 
-        // Se a senha estiver incorreta
+        // Se senha estiver incorreta
         if (!senhaCorreta) {
             throw new RuntimeException("Senha inválida");
         }
 
-        String token = jwtService.generateToken(user.getEmail());
+        // Gera token JWT
+        String token = jwtService.generateToken(
+                user.getEmail()
+        );
+
+        // Retorna token
         return new AuthResponse(token);
     }
 }
