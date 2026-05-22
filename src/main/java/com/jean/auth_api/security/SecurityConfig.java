@@ -1,16 +1,13 @@
 package com.jean.auth_api.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-
 import org.springframework.security.config.http.SessionCreationPolicy;
 
 import org.springframework.security.web.SecurityFilterChain;
-
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -27,30 +24,31 @@ public class SecurityConfig {
             // Desabilita CSRF
             .csrf(csrf -> csrf.disable())
 
-            // Desabilita sessão
+            // API sem sessão
             .sessionManagement(session ->
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
-            // Permite H2
+            // Libera H2 Console
             .headers(headers ->
                     headers.frameOptions(frame -> frame.disable())
             )
 
-            // Configura permissões
+            // Configuração de rotas
             .authorizeHttpRequests(auth -> auth
 
-                // Rotas públicas
-                .requestMatchers(
-                        "/auth/**",
-                        "/h2-console/**"
-                ).permitAll()
+                    // ROTAS PÚBLICAS
+                    .requestMatchers(
+                            "/auth/register",
+                            "/auth/login",
+                            "/h2-console/**"
+                    ).permitAll()
 
-                // Qualquer outra rota precisa de token
-                .anyRequest().authenticated()
+                    // Qualquer outra rota exige autenticação
+                    .anyRequest().authenticated()
             )
 
-            // Adiciona filtro JWT antes do filtro padrão
+            // Adiciona filtro JWT
             .addFilterBefore(
                     jwtAuthenticationFilter,
                     UsernamePasswordAuthenticationFilter.class

@@ -35,30 +35,44 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
+        // Pega rota atual
+        String path = request.getServletPath();
+
+        /*
+         * Ignora rotas públicas
+         */
+        if (
+                path.equals("/auth/login") ||
+                path.equals("/auth/register") ||
+                path.startsWith("/h2-console")
+        ) {
+
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         // Pega header Authorization
         final String authHeader = request.getHeader("Authorization");
 
-        // Se não existir token, continua normalmente
+        // Se não tiver token
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
 
             filterChain.doFilter(request, response);
             return;
         }
 
-        // Remove "Bearer "
+        // Remove Bearer
         String token = authHeader.substring(7);
 
-        // Extrai email do token
+        // Extrai email
         String email = jwtService.extractUsername(token);
 
-        // Se encontrou email e usuário ainda não está autenticado
-        if (email != null &&
-                SecurityContextHolder.getContext().getAuthentication() == null) {
+        // Se usuário ainda não autenticado
+        if (
+                email != null &&
+                SecurityContextHolder.getContext().getAuthentication() == null
+        ) {
 
-            /*
-             * Cria usuário autenticado temporário
-             * Depois vamos ligar isso no banco de dados
-             */
             UserDetails userDetails = User
                     .withUsername(email)
                     .password("")
@@ -80,7 +94,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                 .buildDetails(request)
                 );
 
-                // Autentica usuário no Spring Security
                 SecurityContextHolder.getContext()
                         .setAuthentication(authToken);
             }
